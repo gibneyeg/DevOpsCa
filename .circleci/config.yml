@@ -1,0 +1,45 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5
+
+jobs:
+  test:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Run tests
+          command: npm test --passWithNoTests
+
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "${SSH_KEY_FINGERPRINT}" # This will be added in CircleCI settings
+      - run:
+          name: Setup SSH config
+          command: |
+            mkdir -p ~/.ssh
+            echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+            chmod 600 ~/.ssh/config
+      - run:
+          name: Deploy to AWS EC2
+          command: |
+            ssh -i ~/.ssh/id_rsa ubuntu@${EC2_IP_ADDRESS} 'bash -s' < ./deploy.sh
+
+workflows:
+  test-and-deploy:
+    jobs:
+      - test
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
