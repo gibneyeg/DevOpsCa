@@ -4,8 +4,11 @@ set -e
 # Navigate to application directory
 cd ~/DevOpsCa
 
-# Pull the latest changes from GitHub
-git pull
+# Fetch the latest changes
+git fetch origin
+
+# Reset to match remote branch (discards local changes)
+git reset --hard origin/main
 
 # Install dependencies
 npm install
@@ -13,7 +16,7 @@ npm install
 # Restart the application with PM2
 pm2 restart DevOpsCa || pm2 start bin/www --name "DevOpsCa"
 
-# Save PM2 process list
+# Save the PM2 process list
 pm2 save
 
 echo "Deployment completed successfully!"
